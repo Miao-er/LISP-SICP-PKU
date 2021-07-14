@@ -1,0 +1,15 @@
+#lang racket
+(define (comp x y) (if(> x y) x y)) 
+(define (oneline num)
+  (begin (define x (read))
+   (if(= num 1)
+      x
+      (comp x (oneline  (- num 1))) 
+      )))
+(define (scanf num)
+  (if(= num 0)
+     (void)
+     (begin (display (oneline (read)))
+     (newline)
+     (scanf (- num 1)))))
+(scanf (read))

@@ -1,0 +1,88 @@
+描述
+pipeline是一个函数，用法如下:
+
+(pipeline lst op_1 op_2 ... op_n)
+
+
+它能对列表lst依次用多个函数op_1....op_n 进行处理, op_i 处理的结果就是 op_(i+1)的输入。pipeline返回 op_n的处理结果。
+op_1 ... op_n个数可变。如果只有一个参数 lst,则返回lst。
+
+
+
+需要进行程序补足，使得补足后的程序，除了输出固定的一些数据以外，对于给定的输入能产生指定的输出结果。
+
+
+
+#lang racket
+(define (pipeline operand . ops)
+// 在此处补充你的代码
+(define (fib n) ;get the nth item of Fibonacci
+  (define (helper a b i)
+    (if (> i n)
+        b
+        (helper b (+ a b) (+ i 1))))
+  (if (= n 0)
+      0
+      (helper 0 1 2)))
+
+(define (accumulate op init seq)
+  (if (null? seq)
+      init
+      (op (car seq) (accumulate op init (cdr seq)))))
+
+(define (enumerate-interval a b)
+  (if (> a b)
+      '()
+      (cons a (enumerate-interval (+ a 1) b))))
+
+
+(define (even-fibs n)
+  (pipeline (enumerate-interval 1 n)
+            (lambda (lst) (map fib lst))
+            (lambda (lst) (filter even? lst))
+            (lambda (lst) (accumulate cons '() lst))))
+(display (even-fibs 9)) (newline)
+(display (even-fibs 19)) (newline)
+
+(display "******") (newline)
+(define (square x) (* x x))
+(define (inc x) (+ x 1))
+
+
+(define (f1 lst)
+  (if (not (pair? (car lst)))
+      (pipeline lst
+                (lambda (x) (map square x))
+                (lambda (x) (map inc x))
+                (lambda (x) (map inc x))
+                (lambda (x) (map inc x)))
+      (pipeline lst
+                (lambda (x) (map car x))
+                (lambda (x) (map inc x))
+                (lambda (x) (map square x))
+                (lambda (x) (map inc x))
+                (lambda (x) (map inc x)))))
+
+(define (myloop)
+  (let ((a (read)))
+    (if (eq? a eof)
+        (void)
+        (begin (display (f1 a)) (newline)
+               (myloop)))))
+
+(myloop)
+输入
+若干行，每行一个scheme形式的非空表。表有两种格式
+1. 表里的每个元素都是整数
+2. 表里的每个元素都是个由至少1个整数组成的表
+输出
+对每行，输出按照已经给出的程序的逻辑处理后的结果
+样例输入
+(1 2 3 4)
+((1) (2 4) (3 5) (4 6) (5 7))
+样例输出
+(2 8 34)
+(2 8 34 144 610 2584)
+******
+(4 7 12 19)
+(6 11 18 27 38)

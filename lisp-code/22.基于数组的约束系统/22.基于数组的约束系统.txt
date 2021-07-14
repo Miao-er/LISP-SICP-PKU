@@ -1,0 +1,151 @@
+描述
+我们已经知道了如何建立一个基于实数的约束系统，这一系统可以很容易被推广到列表上。如果我们要求a + b = s，其中a、b、s均为list，那么我们可以使用基本约束 (adder-list a b s) 来描述这一约束关系。请编写程序实现这一功能。
+
+#lang racket
+
+
+(define (make-connector)
+  (let ((value false) (informant false) (constraints '()))
+    (define (set-my-value newval setter)
+      (cond ((not (has-value? me))
+             (set! value newval)
+             (set! informant setter)
+             (for-each-except setter
+                              inform-about-value
+                              constraints))
+            ((not (= value newval))
+             (error "Contradiction" (list value newval)))
+            (else 'ignored)))
+    (define (forget-my-value retractor)
+      (if (not (has-value? me))
+          (void)
+          (begin
+            (set! informant false)
+            (for-each-except retractor
+                             inform-about-no-value
+                             constraints))))
+    (define (connect new-constraint)
+      (if (not (memq new-constraint constraints))
+          (set! constraints
+                (cons new-constraint constraints))
+          (void))
+      (if (has-value? me)
+          (inform-about-value new-constraint)
+          (void))
+      'done)
+    (define (me request)
+      (cond ((eq? request 'has-value?)
+             (if informant true false))
+            ((eq? request 'value) value)
+            ((eq? request 'set-value!) set-my-value)
+            ((eq? request 'forget) forget-my-value)
+            ((eq? request 'connect) connect)
+            (else (error "Unknown operation: CONNECTOR"
+                         request))))
+    me))
+
+(define (for-each-except exception procedure list)
+  (define (loop items)
+    (cond ((null? items) 'done)
+          ((eq? (car items) exception) (loop (cdr items)))
+          (else (procedure (car items))
+                (loop (cdr items)))))
+  (loop list))
+
+(define (has-value? connector) (connector 'has-value?))
+(define (get-value connector) (connector 'value))
+(define (set-value! connector new-value informant)
+  ((connector 'set-value!) new-value informant))
+(define (forget-value! connector retractor)
+  ((connector 'forget) retractor))
+(define (connect connector new-constraint)
+  ((connector 'connect) new-constraint))
+
+(define (inform-about-value constraint)
+  (constraint 'I-have-a-value))
+(define (inform-about-no-value constraint)
+  (constraint 'I-lost-my-value))
+
+(define (probe name connector)
+  (define (print-probe value)
+    (display "Probe: ") (display name)
+    (display " = ") (displayln value))
+  (define (process-new-value)
+    (print-probe (get-value connector)))
+  (define (process-forget-value) (void))
+  (define (me request)
+    (cond ((eq? request 'I-have-a-value)
+           (process-new-value))
+          ((eq? request 'I-lost-my-value)
+           (process-forget-value))
+          (else (error "Unknown request: PROBE" request))))
+  (connect connector me)
+  me)
+// 在此处补充你的代码
+(define (probe-list list-name lst)
+  (define (probe-helper lst ref)
+    (if (null? lst)
+        (void)
+        (begin
+          (probe (string-append list-name
+                                (number->string ref))
+                 (car lst))
+          (probe-helper (cdr lst) (+ ref 1)))))
+  (probe-helper lst 0))
+
+(define (init-connector n)
+  (if (= n 0)
+      '()
+      (cons (make-connector)
+            (init-connector (- n 1)))))
+             
+(define (solve)
+  (let ((n (read)))
+    (let ((a (init-connector n))
+          (b (init-connector n))
+          (s (init-connector n)))
+      (probe-list "a" a)
+      (probe-list "b" b)
+      (probe-list "s" s)
+      (adder-list a b s)
+      (operate a b s)
+      (displayln (get-value-list a))
+      (displayln (get-value-list b))
+      (displayln (get-value-list s)))))
+
+(define (operate a b s)
+  (let ((lst (read))
+        (ref (read))
+        (val (read)))
+    (if (eq? lst eof)
+        (void)
+        (begin
+          (cond
+            ((eq? lst 'a) (set-value-list! a ref val 'user))
+            ((eq? lst 'b) (set-value-list! b ref val 'user))
+            ((eq? lst 's) (set-value-list! s ref val 'user)))
+          (operate a b s)))))
+
+(solve)
+输入
+一组数据。
+第一行为n，代表数组的长度。
+接下来若干行每行包含name、ref和val，将name列表的第ref个元素改为val。name可能为a、b或s，a和b是加数，s是和。数据保证不会出现修改已经确定的值的情况。
+输出
+对于每次数据的更改，输出若干行。每行包括哪一项元素被修改，以及更改后该元素的值。如果一次操作修改了多个值，先输出被动修改的，再输出主动修改的。
+读入完毕后，输出当前三个数组的情况。遇到初始化后未经修改的数据，输出#f。
+样例输入
+4
+a 3 1
+b 2 2
+s 3 2
+样例输出
+Probe: a3 = 1
+Probe: b2 = 2
+Probe: b3 = 1
+Probe: s3 = 2
+(#f #f #f 1)
+(#f #f 2 1)
+(#f #f #f 2)
+提示
+给出的代码中已经保证了一次操作修改了多个值时的输出顺序正确，无需再次考虑

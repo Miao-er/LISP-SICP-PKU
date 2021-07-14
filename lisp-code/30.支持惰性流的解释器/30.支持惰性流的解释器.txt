@@ -1,0 +1,67 @@
+描述
+以SICP课本4.2节的正则序求值器程序为基础，实现支持惰性流的解释器（课本练习4.33)
+
+输入
+一段scheme程序
+输出
+该程序的输出结果。必须是正则序求值的。
+样例输入
+(car (cdr '(a b c)))
+
+
+(define x 100)
+(define (inc)
+	(set! x (+ x 1))
+	x)
+
+(define p1 (cons (inc) 100))
+x
+(car p1)
+x
+
+
+
+(define (list-ref items n)
+  (if (= n 0)
+      (car items)
+      (list-ref (cdr items) (- n 1))))
+(define (map proc items)
+  (if (null? items)
+      '()
+      (cons (proc (car items))
+            (map proc (cdr items)))))
+(define (scale-list items factor)
+  (map (lambda (x) (* x factor))
+       items))
+(define (add-lists list1 list2)
+  (cond ((null? list1) list2)
+        ((null? list2) list1)
+        (else (cons (+ (car list1) (car list2))
+                    (add-lists (cdr list1) (cdr list2))))))
+(define ones (cons 1 ones))
+(define integers (cons 1 (add-lists ones integers)))
+
+(list-ref integers 17)
+
+
+(define (integral integrand initial-value dt)
+  (define int
+    (cons initial-value
+          (add-lists (scale-list integrand dt)
+                    int)))
+  int)
+(define (solve f y0 dt)
+  (define y (integral dy y0 dt))
+  (define dy (map f y))
+  y)
+
+
+(list-ref (solve (lambda (x) x) 1 0.001) 1000)
+
+样例输出
+b
+100
+101
+101
+18
+2.716923932235896

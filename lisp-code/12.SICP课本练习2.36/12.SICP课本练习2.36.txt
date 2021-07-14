@@ -1,0 +1,60 @@
+描述
+SICP课本练习2.36。
+
+Exercise 2.36.  The procedure accumulate-nis similar to accumulateexcept that it takes as its third argument a sequence of sequences, which are all assumed to have the same number of elements.  It applies the designated accumulation procedure to combine all the first elements of the sequences, all the second elements of the sequences, and so on, and returns a sequence of the results.  For instance, if sis a sequence containing four sequences, ((1 2 3) (4 5 6) (7 8 9) (10 11 12)),then the value of (accumulate-n + 0 s)should be the sequence (22 26 30).  Fill in the missing expressions in the following definition of accumulate-n:
+
+(define (accumulate-n op init seqs)
+  (if (null? (car seqs))
+      nil
+      (cons (accumulate op init <??>)
+            (accumulate-n op init <??>))))
+
+
+
+需要进行程序补足，使得补足后的程序，除了输出固定的一些数据以外，对于给定的输入能产生指定的输出结果。
+
+
+
+#lang racket
+(define (accumulate op init seq)
+  (if (null? seq)
+      init
+      (op (car seq) (accumulate op init (cdr seq)))))
+
+(define (accumulate-n op init seqs)
+  (if (null? seqs)
+      '()
+      (cons (accumulate op init
+// 在此处补充你的代码
+(define s (list (list 1 2 3) (list 4 5 6) (list 7 8 9) (list 10 11 12)))
+(display (accumulate-n + 10 s)) (newline)
+(display (accumulate-n * 1 s)) (newline)
+(display (accumulate-n cons '() s)) (newline)
+(display "******") (newline)
+(define (myloop)
+  (let ((lst (read)))
+    (if (eq? lst eof)
+        (void)
+        (begin (display (accumulate-n + 0 lst)) (newline)
+               (display (accumulate-n cons '(a) lst)) (newline)
+               (myloop)))))
+
+             
+
+(myloop)
+输入
+是一张表，表里的每个元素都是表，且各个元素的长度相同
+输出
+除了输出一些固定的数据外，对每行的表，输出按题目要求处理的结果
+样例输入
+((2 3) (4 5))
+((10))
+样例输出
+(32 36 40)
+(280 880 1944)
+((1 4 7 10) (2 5 8 11) (3 6 9 12))
+******
+(6 8)
+((2 4 a) (3 5 a))
+(10)
+((10 a))

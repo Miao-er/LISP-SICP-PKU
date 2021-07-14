@@ -1,0 +1,36 @@
+描述
+具体题目参看课本练习1.37。需要进行程序补足，使得补足后的程序，除了输出固定的一些数据以外，对于给定的输入能产生指定的输出结果.要求写迭代的程序。
+
+#lang racket
+(define (cont-frac-iter N D k)
+// 在此处补充你的代码
+(cont-frac-iter (lambda (x) x) 
+           (lambda (x) 1.0)
+           30)
+ 
+(cont-frac-iter (lambda (x) (* 2 x))
+           (lambda (x) (* 1.0 x))
+           30)
+
+(display "********") (newline)
+(define (myloop)
+  (let ((k (read)))
+    (if (eq? k eof)
+        (void)
+        (begin (display (cont-frac-iter (lambda (x) 1.0) (lambda (x) 1.0) k)) 
+(newline) (myloop)))))
+
+(myloop)
+输入
+多组数据，每组1行，就是题目中 k 的值
+输出
+除了输出一些固定的数据外，对每组输入数据，输出k所对应的黄金分割率
+样例输入
+10
+20
+样例输出
+0.5250090539319173
+0.9113576837112107
+********
+0.6179775280898876
+0.6180339850173579

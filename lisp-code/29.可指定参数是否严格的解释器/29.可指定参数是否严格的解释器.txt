@@ -1,0 +1,96 @@
+描述
+实现一个函数参数是否严格，可以由程序员在定义函数时指定的解释器。即SICP 课本练习 4.31
+
+注意输入程序中会使用car,cdr,cons ,null? , cadr
+
+输入
+一段scheme程序，程序中的函数参数可以被指定为严格，不严格且不记忆，不严格且记忆三种，例如：
+
+(define (f a (b lazy) c (d lazy-memo))
+....)
+
+a c是严格的，b是不严格且不记忆的，d是不严格且记忆的
+输出
+输入的那段程序的运行结果
+样例输入
+(display "case 1:") (newline)
+(define (func (x lazy)) x)
+(define w (func (/ 1 0)))
+(define k w)
+(define (try a (b lazy))
+         (if (= a 0) 
+             a 
+             b))
+(try 0 k)
+
+
+(display "case 2:") (newline)
+(define (p1 x)
+  (define (p (e lazy))
+    e
+    x)
+  (p (set! x (cons x '(2)))))
+(p1 1)
+
+
+(display "case 3:") (newline)
+(define (p2 x)
+  (define (p e)
+    e
+    x)
+  (p (set! x (cons x '(2)))))
+(p2 1)
+
+
+(define (inc x)
+  (display "x=") (display x) (newline)
+  (set! x (+ 1 x))
+  x)
+
+(display "case 4:") (newline)
+(define (f1 x)
+  (> x 1) x)
+(f1 (inc 3))
+
+
+(display "case 5:") (newline)
+(define (f2 (x lazy))
+  (> x 1) x)
+(f2 (inc 3))
+
+
+(display "case 6:") (newline)
+(define (f3 (x lazy-memo))
+  (> x 1) x)
+(f3 (inc 3))
+
+
+(display "case 7:") (newline)
+(define (f x (y lazy) (z lazy-memo))
+  x (+ x 1) (+ x 1)
+  y ( + y 1) (+ y 1) 
+  z (> z 1) (+ z 1))
+(f (inc 2) (inc 20) (inc 200))
+样例输出
+case 1:
+0
+case 2:
+1
+case 3:
+(1 2)
+case 4:
+x=3
+4
+case 5:
+x=3
+x=3
+4
+case 6:
+x=3
+4
+case 7:
+x=2
+x=20
+x=20
+x=200
+202

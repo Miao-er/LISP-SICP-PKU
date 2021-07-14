@@ -1,0 +1,61 @@
+描述
+完成下面的练习b
+
+Exercise 2.58.  Suppose we want to modify the differentiation program so that it works with ordinary mathematical notation, in which +and *are infix rather than prefix operators.  Since the differentiation program is defined in terms of abstract data, we can modify it to work with different representations of expressions solely by changing the predicates, selectors, and constructors that define the representation of the algebraic expressions on which the differentiator is to operate.
+
+a. Show how to do this in order to differentiate algebraic expressions presented in infix form, such as (x + (3 * (x + (y + 2)))). To simplify the task, assume that +and *always take two arguments and that expressions are fully parenthesized.
+
+b. The problem becomes substantially harder if we allow standard algebraic notation, such as (x + 3 * (x + y + 2)), which drops unnecessary parentheses and assumes that multiplication is done before addition.  Can you design appropriate predicates, selectors, and constructors for this notation such that our derivative program still works?
+
+
+
+#lang racket
+// 在此处补充你的代码
+(define (deriv exp var)
+  (cond ((number? exp ) 0)
+        ((variable? exp)
+         (if (same-variable? exp var) 1 0))
+        ((sum? exp)
+         (make-sum (deriv (addend exp) var)
+                   (deriv (augend exp) var)))
+        ((product? exp)
+         (make-sum 
+          (make-product (multiplier exp)
+                        (deriv (multiplicand exp) var))
+          (make-product (deriv (multiplier exp) var)
+                        (multiplicand exp))))
+        (else 
+         (error "wrong format"))))
+
+(define (myloop)
+  (let ((a (read)))
+    (if (eq? a eof)
+        (void)
+        (begin (display (deriv a 'x)) (newline) (myloop)))))
+
+(myloop)
+输入
+每行是一个scheme格式的列表表示的函数式，运算符中置。
+输出
+对每一行，输出对x求导的结果。要求结果必须和样例一致。样例数据即为全部的测试数据。
+样例输入
+0
+x
+(x * 3)
+(y + x)
+(y * x)
+(x * x  + x * y)
+(x * x * x)
+(x * x * y)
+(x * x + x * x * y * (x + 3) + x * y)
+
+样例输出
+0
+1
+3
+1
+y
+(x + x + y)
+(x * (x + x) + x * x)
+(x * y + x * y)
+(x + x + x * (x * y + y * (x + 3)) + x * y * (x + 3) + y)

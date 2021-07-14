@@ -1,0 +1,54 @@
+描述
+函数(combine f1 f2 n)的两个参数f1,f2都是函数，n是非负整数。其返回值是一个函数k。
+记函数 g(x) = f1(f2(x))，则
+若 n = 0 ,则 k(x) = x
+若 n = 1 ，则k(x) = g(x)
+若 n = 2 ，则k(x) = g(g(x))
+若 n = 3 ,则k(x) = g(g(g(x)))
+....
+
+以此类推，即k(x) 等于将g在x上应用n次。
+
+要求补足程序。除了输出固定的一些结果以外，对于给定的输入能产生指定的输出结果
+
+#lang racket
+
+(define (square x) (* x x))
+(define (inc x) (+ x 1))
+(define (db x) (* x 2))
+
+(define (combine f1 f2 n)
+// 在此处补充你的代码
+((combine square inc 1) 2)
+((combine square inc 2) 3)
+((combine db inc 3) 2)
+((combine inc inc 4) 3)
+
+(display "********") (newline)
+
+(define (myloop)
+  (let ((n (read))
+        (x (read)))
+    (if (eq? n eof)
+        (void)
+        (begin (display ((combine inc square n) x)) 
+               (newline) (myloop)))))
+
+(myloop)
+输入
+若干行，每行两个非负整数，n和x
+输出
+对于每行，输出 ((combine inc square n) x) 的结果
+样例输入
+0 87
+1 1
+2 2
+样例输出
+9
+289
+30
+11
+********
+87
+2
+26

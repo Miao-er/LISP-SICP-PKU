@@ -1,0 +1,106 @@
+描述
+实现SICP课本第五章第一节的基本的寄存器机器模拟器
+
+
+
+
+
+输入
+输入有多个case。每个case分为两部分。
+
+
+每个case的第一部分是寄存器机器的描述。描述的格式为SICP课本上make-machine函数的调用形式，例如:
+
+(make-machine
+'(a b t)
+(list (list 'rem remainder) (list '= =))
+'(test-b
+(test (op =) (reg b) (const 0))
+(branch (label gcd-done))
+(assign t (op rem) (reg a) (reg b))
+(assign a (reg b))
+(assign b (reg t))
+(goto (label test-b))
+gcd-done))
+
+其中,第三行的操作列表部分中的每个元素都是 (list 'X Y)的形式，且 Y 的取值仅限于:
+
+remainder = + - * / > < eq?
+
+上述这些符号的含义，就是scheme中上述基本运算符的含义。
+
+
+每个case的的第二部分，有若干组。每组的第一行描述了在机器运行前要对哪些寄存器设置什么样的值。第二行描述了模拟器需要输出哪些机器运行后的寄存器的值。例如一组数据为:
+
+((a 3) (b 4))
+(t a)
+
+表示机器运行前要将寄存器a的值设置为3，b的值设置为4。要求输出机器运行后， 寄存器 t和a的值
+输出
+对于每个case：
+
+先输出一行：
+
+a new machine
+
+然后，输出第二部分里每组的第二行所提到的寄存器的值。
+样例输入
+(make-machine
+   '(a b t)
+   (list (list 'rem remainder) (list '= =))
+   '(test-b
+       (test (op =) (reg b) (const 0))
+       (branch (label gcd-done))
+       (assign t (op rem) (reg a) (reg b))
+       (assign a (reg b))
+       (assign b (reg t))
+       (goto (label test-b))
+     gcd-done))
+
+((a 12) (b 18))
+(a)
+((a 37) (b 11))
+(a)
+
+(make-machine
+   '(c d val)
+   (list (list '+ +))
+   '(
+       (assign val (op +) (reg c) (reg d))
+     ))
+
+((c 12) (d 18))
+(val)
+((c 37) (d 11))
+(val c d)
+
+
+(make-machine
+   '(a b tmp)
+   (list )
+   '(
+       (assign tmp (reg a))
+       (assign a (reg b))
+       (assign b (reg tmp))
+     ))
+
+((a 10) (b 20))
+(a b)
+
+((a Tom) (b Jack))
+(a b)
+
+样例输出
+a new machine
+6
+1
+a new machine
+30
+48 37 11
+a new machine
+20 10
+Jack Tom
+
+
+提示
+输入数据包含课本上斐波那契数列的机器，请自行测试

@@ -1,0 +1,18 @@
+#lang racket
+(define (fact num n)
+  (if(= n 0)
+     1
+     (* num (fact (- num 1) (- n 1)))))
+(define (combine x y)
+  (if(> (* 2 y) x)
+     (/ (fact x  (- x y)) (fact (- x y) (- x y)))
+     (/ (fact x  y) (fact y y))))
+(define (print i j x)
+  (cond ((> i x) (void))
+        ((>= j i) (begin (display (combine (- i 1) (- j 1))) (newline) (print (+ i 1) 1 x)))
+        (else (begin (display (combine (- i 1) (- j 1))) (display #\space) (print i (+ j 1) x))))) 
+(define (scanf x)
+  (if(eq? x eof)
+     (void)
+     (begin (print 1 1 x) (scanf (read)))))
+(scanf (read))

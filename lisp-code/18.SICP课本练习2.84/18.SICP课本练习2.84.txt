@@ -1,0 +1,430 @@
+描述
+Exercise 2.84.  Using the raise operation of exercise 2.83, modify the apply-generic procedure so that it coerces its arguments to have the same type by the method of successive raising, as discussed in this section. You will need to devise a way to test which of two types is higher in the tower. Do this in a manner that is ``compatible'' with the rest of the system and will not lead to problems in adding new levels to the tower.
+
+
+算术运算系统里有级别从低到高的四种数据类型，分别是整数，分数，实数，复数。它们的标记分别为:
+
+integer, rational, real , complex
+
+现在要实现这四种数的混合四则运算。
+
+运算的规则是：
+
+1. 每个算式只有一个运算符和两个操作数。运算符是 +,-,* 或 /
+2. 如果两个操作数级别不同，则要将低级别的操作数转换成高级别的操作数，然后再运算
+3. 算式的运算结果的类型，和两个操作数中级别高的操作数类型相同
+4. 整数和整数做除法，不论能否整除，结果都是分数
+5. 分数输出时要化成最简
+6. complex 的实部和虚部都有可能是整数，分数或者小数，根据实际运算结果而定
+
+
+先产生一些固定的输出，然后输入若干算式，输出每个算式的计算结果。
+
+
+请注意，
+1. 课本上的 (install-complex-package) 在本程序中被修改了，使得复数乘除的结果也是直角坐标形式的
+2. 本程序新增了integer包，在install-integer-package中
+2. 本程序新增了real包，在install-real-package中
+3. install-raise-package是类型转换包，你需要补足它。本程序中的类型转换函数，只能是把低级别的数转换到高一级别的数。你自己不允许编写跨级别的类型转换函数，比如写一个函数把integer转换成complex，这是不允许的
+4. 你需要写出 apply-generic 函数，在其中用raise-package中的类型转换函数进行类型转换
+5. 你需要写出输出数据的函数 display-obj
+
+
+
+
+
+#lang racket
+(define (square x) (* x x))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;以下是put和get的实现，不须搞明白也能完成本题
+(require scheme/mpair)
+
+(define (make-table)
+  (let ((local-table (mlist '*table*)))
+    (define (lookup key-1 key-2)
+      (let ((subtable (massoc key-1 (mcdr local-table))))
+        (if subtable
+            (let ((record (massoc key-2 (mcdr subtable))))
+              (if record
+                  (mcdr record)
+                  false))
+            false)))
+    (define (insert! key-1 key-2 value)
+      (let ((subtable (massoc key-1 (mcdr local-table))))
+        (if subtable
+            (let ((record (massoc key-2 (mcdr subtable))))
+              (if record
+                  (set-mcdr! record value)
+                  (set-mcdr! subtable
+                            (mcons (mcons key-2 value)
+                                  (mcdr subtable)))))
+            (set-mcdr! local-table
+                      (mcons (mlist key-1
+                                  (mcons key-2 value))
+                            (mcdr local-table)))))
+      (void))    
+    (define (dispatch m)
+      (cond ((eq? m 'lookup-proc) lookup)
+            ((eq? m 'insert-proc!) insert!)
+            (else (error "Unknown operation -- TABLE" m))))
+    dispatch))
+
+(define operation-table (make-table))
+(define get (operation-table 'lookup-proc))
+(define put (operation-table 'insert-proc!))
+
+(define conversion-table (make-table))
+(define get-coercion (conversion-table 'lookup-proc))
+(define put-coercion (conversion-table 'insert-proc!))
+;以上是put和get的实现，不须搞明白也能完成本题
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;---------- about tags:
+(define (attach-tag type-tag contents)
+  (cons type-tag contents))
+(define (type-tag datum)
+  (if (pair? datum)
+      (car datum)
+      (error "Bad tagged datum -- TYPE-TAG" datum)))
+(define (contents datum)
+  (if (pair? datum)
+      (cdr datum)
+      (error "Bad tagged datum -- CONTENTS" datum)))
+
+;--------- rectangular compex package
+(define (install-rectangular-package)
+  ;; internal procedures
+  (define (real-part z) (car z))
+  (define (imag-part z) (cdr z))
+  (define (make-from-real-imag x y) (cons x y))
+  (define (magnitude z)
+    (sqrt (+ (square (real-part z))
+             (square (imag-part z)))))
+  (define (angle z)
+    (atan (imag-part z) (real-part z)))
+  (define (make-from-mag-ang r a) 
+    (cons (* r (cos a)) (* r (sin a))))
+  ;; interface to the rest of the system
+  (define (tag x) (attach-tag 'rectangular x))
+  (put 'real-part '(rectangular) real-part)
+  (put 'imag-part '(rectangular) imag-part)
+  (put 'magnitude '(rectangular) magnitude)
+  (put 'angle '(rectangular) angle)
+  (put 'make-from-real-imag 'rectangular 
+       (lambda (x y) (tag (make-from-real-imag x y))))
+  (put 'make-from-mag-ang 'rectangular 
+       (lambda (r a) (tag (make-from-mag-ang r a))))
+  (void))
+
+;----------- polar complex package
+(define (install-polar-package)
+  ;; internal procedures
+  (define (magnitude z) (car z))
+  (define (angle z) (cdr z))
+  (define (make-from-mag-ang r a) (cons r a))
+  (define (real-part z)
+    (* (magnitude z) (cos (angle z))))
+  (define (imag-part z)
+    (* (magnitude z) (sin (angle z))))
+  (define (make-from-real-imag x y) 
+    (cons (sqrt (+ (square x) (square y)))
+          (atan y x)))
+  ;; interface to the rest of the system
+  (define (tag x) (attach-tag 'polar x))
+  (put 'real-part '(polar) real-part)
+  (put 'imag-part '(polar) imag-part)
+  (put 'magnitude '(polar) magnitude)
+  (put 'angle '(polar) angle)
+  (put 'make-from-real-imag 'polar
+       (lambda (x y) (tag (make-from-real-imag x y))))
+  (put 'make-from-mag-ang 'polar 
+       (lambda (r a) (tag (make-from-mag-ang r a))))
+  (void))
+
+
+
+;----------- rational package
+(define (install-rational-package)
+  ;; internal procedures
+  (define (numer x) (car x))
+  (define (denom x) (cdr x))
+  (define (make-rat n d)
+    (let ((g (gcd n d)))
+      (cons (/ n g) (/ d g))))
+  (define (add-rat x y)
+    (make-rat (+ (* (numer x) (denom y))
+                 (* (numer y) (denom x)))
+              (* (denom x) (denom y))))
+  (define (sub-rat x y)
+    (make-rat (- (* (numer x) (denom y))
+                 (* (numer y) (denom x)))
+              (* (denom x) (denom y))))
+  (define (mul-rat x y)
+    (make-rat (* (numer x) (numer y))
+              (* (denom x) (denom y))))
+  (define (div-rat x y)
+    (make-rat (* (numer x) (denom y))
+              (* (denom x) (numer y))))
+  
+  ;; interface to rest of the system
+  (define (tag x) (attach-tag 'rational x))
+  (put 'add '(rational rational)
+       (lambda (x y) (tag (add-rat x y))))
+  (put 'sub '(rational rational)
+       (lambda (x y) (tag (sub-rat x y))))
+  (put 'mul '(rational rational)
+       (lambda (x y) (tag (mul-rat x y))))
+  (put 'div '(rational rational)
+       (lambda (x y) (tag (div-rat x y))))
+  (put 'rational 'numer
+       (lambda (x) (numer (contents x)))) ; x is tagged rational
+  (put 'rational 'denom
+       (lambda (x) (denom (contents x)))) ; x is tagged rational
+
+  (put 'make 'rational
+       (lambda (n d) (tag (make-rat n d))))
+  (void))
+(define (make-rational n d)
+  ((get 'make 'rational) n d))
+
+
+
+
+;---------- high level complex package
+(define (install-complex-package)
+  ;; imported procedures from rectangular and polar packages
+  (define (make-from-real-imag x y)
+    ((get 'make-from-real-imag 'rectangular) x y))
+  (define (make-from-mag-ang r a)
+    ((get 'make-from-mag-ang 'polar) r a))
+  ;; internal procedures
+  (define (add-complex z1 z2)
+    (make-from-real-imag (+ (real-part z1) (real-part z2))
+                         (+ (imag-part z1) (imag-part z2))))
+  (define (sub-complex z1 z2)
+    (make-from-real-imag (- (real-part z1) (real-part z2))
+                         (- (imag-part z1) (imag-part z2))))
+;  (define (mul-complex z1 z2)
+;    (make-from-mag-ang (* (magnitude z1) (magnitude z2))
+;                       (+ (angle z1) (angle z2))))
+;  (define (div-complex z1 z2)
+;    (make-from-mag-ang (/ (magnitude z1) (magnitude z2))
+;                       (- (angle z1) (angle z2))))
+ (define (mul-complex z1 z2)
+   (let ((a (real-part z1))
+         (b (imag-part z1))
+         (c (real-part z2))
+         (d (imag-part z2)))
+     (make-from-real-imag (- (* a c) (* b d)) (+ (* a d) (* b c)))))
+
+ (define (div-complex z1 z2)
+   (let ((a (real-part z1))
+         (b (imag-part z1))
+         (c (real-part z2))
+         (d (imag-part z2)))
+     (let ((denom (+ (square c) (square d))))
+       (make-from-real-imag (/ (+ (* a c) (* b d)) denom)
+                            (/ (- (* b c) (* a d)) denom)))))
+
+  ;(a+bi)/(c+di) =(a+bi)*(c-di)/(c+di)*(c-di)=(ac-adi+bci+bd)/(c*c+d*d)=(ac+bd)/(c^2+d^2)+〔(bc-ad)/(c^2+d^2)〕i  
+  
+  
+  ;; interface to rest of the system
+  (define (tag z) (attach-tag 'complex z))
+  (put 'add '(complex complex)
+       (lambda (z1 z2) (tag (add-complex z1 z2))))
+  (put 'sub '(complex complex)
+       (lambda (z1 z2) (tag (sub-complex z1 z2))))
+  (put 'mul '(complex complex)
+       (lambda (z1 z2) (tag (mul-complex z1 z2))))
+  (put 'div '(complex complex)
+       (lambda (z1 z2) (tag (div-complex z1 z2))))
+  (put 'make-from-real-imag 'complex
+       (lambda (x y) (tag (make-from-real-imag x y))))
+  (put 'make-from-mag-ang 'complex
+       (lambda (r a) (tag (make-from-mag-ang r a))))
+  (void))
+
+;------------- integer package
+(define (install-integer-package)
+  (define (tag x)
+    (attach-tag 'integer x))    
+  (put 'add '(integer integer)
+       (lambda (x y) (tag (+ x y))))
+  (put 'sub '(integer integer)
+       (lambda (x y) (tag (- x y))))
+  (put 'mul '(integer integer)
+       (lambda (x y) (tag (* x y))))
+  (put 'div '(integer integer)
+       (lambda (x y) ((get 'make 'rational )  x y)))
+  (put 'make 'integer
+       (lambda (x) (tag x)))
+  (void))
+
+(define (make-integer n)
+  ((get 'make 'integer) n))
+
+;---------------- real package
+(define (install-real-package)
+  (define (tag x)
+    (attach-tag 'real x))    
+  (put 'add '(real real)
+       (lambda (x y) (tag (+ x y))))
+  (put 'sub '(real real)
+       (lambda (x y) (tag (- x y))))
+  (put 'mul '(real real)
+       (lambda (x y) (tag (* x y))))
+  (put 'div '(real real)
+       (lambda (x y) (tag (/ x y))))
+  (put 'make 'real
+       (lambda (x) (tag (+ x 0.0))))
+  (void))
+
+(define (make-real x)
+  ((get 'make 'real) x))
+
+
+;----------- general functions
+(define (real-part z) (apply-generic 'real-part z))
+(define (imag-part z) (apply-generic 'imag-part z))
+(define (magnitude z) (apply-generic 'magnitude z))
+(define (angle z) (apply-generic 'angle z))
+
+(define (make-from-real-imag x y)
+  ((get 'make-from-real-imag 'rectangular) x y))
+(define (make-from-mag-ang r a)
+  ((get 'make-from-mag-ang 'polar) r a))
+
+(define (make-complex-from-real-imag x y)
+  ((get 'make-from-real-imag 'complex) x y))
+(define (make-complex-from-mag-ang r a)
+  ((get 'make-from-mag-ang 'complex) r a))
+
+(define (add x y) (apply-generic 'add x y))
+(define (sub x y) (apply-generic 'sub x y))
+(define (mul x y) (apply-generic 'mul x y))
+(define (div x y) (apply-generic 'div x y))
+
+
+
+
+
+
+(define (install-raise-package) ;install raise functions 
+  (define (raise-integer n)
+    (make-rational (contents n) 1))
+// 在此处补充你的代码
+(install-integer-package)
+(install-rational-package)
+(install-complex-package)
+(install-rectangular-package)
+(install-polar-package)
+(install-real-package)
+(install-raise-package)
+
+
+(define real-1 (make-real 3.0))
+(define rational-1 (make-rational 4 3))
+(define integer-1 (make-integer 2))
+(define complex-1 (make-complex-from-real-imag 30 40))
+(displayln "*****1")
+(display-obj integer-1)
+(display-obj real-1)
+(display-obj rational-1)
+(display-obj complex-1)
+
+(displayln "*****2")
+(display-obj ((get 'raise 'integer) integer-1)) ;interger converted to rational
+(display-obj ((get 'raise 'rational) rational-1)) ;rational converted to real
+(display-obj ((get 'raise 'real) real-1)) ;real converted to complex
+
+(displayln "*****3")
+(display-obj (add real-1 integer-1))
+(display-obj (add real-1 rational-1))
+(display-obj (add real-1 complex-1))
+(display-obj (add complex-1 integer-1))
+(display-obj (add integer-1 rational-1))
+
+(displayln "******")
+
+;a tagged complex is like: (cons 'complex (cons 'rectangular (cons 3 4))),displayed in racket as '(complex rectangular 3 . 4) 
+
+(define (myloop)
+  (define (make-obj lst)
+    (let ((t (car lst)))
+      (cond ((eq? t 'integer) (make-integer (cadr lst)))
+            ((eq? t 'rational) (make-rational (cadr lst) (caddr lst)))
+            ((eq? t 'real) (make-real (cadr lst)))
+            ((eq? t 'complex) (make-complex-from-real-imag (cadr lst) (caddr lst))))))
+
+  (let ((exp (read)))
+    (if (eq? exp eof)
+        (void)
+        (let ((op (car exp))
+              (a1 (make-obj (cadr exp)))
+              (a2 (make-obj (caddr exp))))
+          (display-obj (cond ((eq? op '+) (add a1 a2))
+                ((eq? op '-) (sub a1 a2))
+                ((eq? op '*) (mul a1 a2))
+                ((eq? op '/) (div a1 a2))))
+          (myloop)))))
+(myloop)
+输入
+每行一个算式。每个算式是一个有三个元素的scheme格式的列表，第一个元素是运算符，可能为 +,- ,* ,/。
+后俩个元素也是scheme格式的列表，表示操作数。操作数的格式有以下四种
+
+(integer n) 表示整数n , n必定是整数
+(rational a b) 表示分数 a/b 其中 a b必定是整数
+(real c) 表示实数 c , c必定是带小数点的
+(complex a b) 表示复数 a+bi
+输出
+对每个算式，输出计算结果。格式和操作数的输入格式相同
+样例输入
+(/ (complex 3 4) (integer 4))
+(/ (complex 3 4) (real 4.0))
+(* (integer 5) (integer 4))
+(* (integer 5) (real 4.0))
+(* (real 4.0) (integer 5))
+(/ (real 4.0) (complex 1 3))
+(/ (integer 5) (integer 2))
+(/ (integer 6) (integer 2))
+(* (rational 4 5) (complex 3 4))
+(* (rational 3 5) (rational 3 8))
+(/ (complex 4 4) (complex 2 0))
+(/ (complex 4 4) (complex 3 0))
+样例输出
+*****1
+(integer 2)
+(real 3.0)
+(rational 4 3)
+(complex 30 40)
+*****2
+(rational 2 1)
+(real 1.3333333333333333)
+(complex 3.0 0)
+*****3
+(real 5.0)
+(real 4.333333333333333)
+(complex 33.0 40)
+(complex 32.0 40)
+(rational 10 3)
+******
+(complex 0.75 1.0)
+(complex 0.75 1.0)
+(integer 20)
+(real 20.0)
+(real 20.0)
+(complex 0.4 -1.2)
+(rational 5 2)
+(rational 3 1)
+(complex 2.4000000000000004 3.2)
+(rational 9 40)
+(complex 2 2)
+(complex 4/3 4/3)
+提示
+****提示: scheme中实数（小数）和整数做运算，结果就是实数,整数之间的除法，如果除不尽，结果就是分数
+
+整数4的内部表示形式是： (cons 'integer 4)
+分数 3/4 的内部表示形式是： (cons 'rational (cons 3 4))
+实数 3.5 的内部表示形式是: (cons 'real 3.5)
+复数 3.2+4.5i 的内部表示形式是 (cons 'complex (cons 'rectangular (cons 3.2 4.5)))

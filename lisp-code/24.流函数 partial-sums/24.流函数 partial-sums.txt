@@ -1,0 +1,81 @@
+描述
+SICP课本练习 3.55
+
+请定义函数partial-sums，它以流S和函数op为参数，返回的流中的元素是 S[0],(op S[0] S[1]),(op s[0] S[1] s[2])....
+例如,(partial-sums + integers)应该生成 1,3,6,10,15 。。。
+其中,integers是正整数流
+
+请在程序中补写 partial-sums的定义    
+
+#lang racket
+;book ex 3.55
+(require r5rs)
+(define env (scheme-report-environment 5))
+(eval '(define (stream-car stream) (car stream)) env)
+(eval '(define (stream-cdr stream) (force (cdr stream))) env)
+(eval '(define-syntax cons-stream
+  (syntax-rules ()
+    [(cons-stream x y) (cons x (delay y))])) env)
+
+(eval '(define the-empty-stream '()) env)
+(eval '(define (stream-null? stream) (null? stream)) env)
+         
+(eval '(define (stream-ref s n)  ;取 stream里面第 n 项,n从0开始算
+  (if (stream-null? s) the-empty-stream
+      (if (= n 0)
+          (stream-car s)
+          (stream-ref (stream-cdr s) (- n 1)))))
+      env)
+
+
+(eval '
+ (define (partial-sums op s) ;以s为参数,返回的流是 s0,(op s0 s1),(op s0 s1 s2), ....
+// 在此处补充你的代码
+env)
+
+(define (myloop)
+  (define (eval-codes codes last-val)
+    (if (null? codes)
+        last-val
+        (eval-codes (cdr codes) (eval (car codes) env))))
+    
+  (let ((codes (read)))
+    (if (eq? codes eof)
+        (void)
+        (begin (displayln (eval-codes codes (void))) (myloop)))))
+(myloop)
+输入
+一段scheme程序，被放在一对括号中。该程序一定以 'ok 结尾
+输出
+输入的scheme程序的运行结果
+样例输入
+(
+(define (displayln x) 
+  (display x) (newline))
+
+(define (integers-starting-from n)
+  (cons-stream n (integers-starting-from (+ n 1))))
+
+
+(define factorials (partial-sums * (integers-starting-from 1)))
+
+(displayln (stream-ref factorials 0))
+(displayln (stream-ref factorials 1))
+(displayln (stream-ref factorials 2)) 
+(displayln (stream-ref factorials 3)) 
+(displayln (stream-ref factorials 4)) 
+
+'ok
+)
+样例输出
+1
+2
+6
+24
+120
+ok
+提示
+1. racke中(require r5rs)后， eval 即成为基本过程。该过程可以对一个scheme表达式在指定环境中求值，并返回求值的结果
+2. 全局环境即为 (scheme-report-environment 5)
+3. eval 的用法示例： (eval '(+ 3 7) (scheme-report-environment 5)), 返回值为 10。在要求值的表达式前加'即可。
+4. 程序中用 eval 对你编写的 partial-sums 函数进行了求值并将其加入到全局环境，因此输入中的程序就可以使用partial-sums了。

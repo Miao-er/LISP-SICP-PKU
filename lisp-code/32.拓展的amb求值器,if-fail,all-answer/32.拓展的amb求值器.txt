@@ -1,0 +1,176 @@
+描述
+实现SICP课本第4章第3节的基本amb求值器的扩展。要求能支持 + - * / > < = remainder 运算符。能处理let语句和cond语句。
+
+扩展部分为:
+
+1) 添加对 if-fail特殊形式的支持 (详见SICP课本练习4.52)
+
+2) 输入中若碰到 try-again，则输出上一个表达式的下一个解。如果无下一个解，则输出：
+
+There are no more answers.
+
+3) 添加对all-answer语句的支持。该语句的格式是:
+
+(all-answer exp)
+
+求值器输出exp的所有解，每个解占一行。例如 (all-answer (amb 1 2 4))则输出
+
+1
+2
+4
+
+
+
+
+
+输入
+扩展的amb程序
+输出
+程序运行的结果。请注意，所有找不到解的情况，一概输出
+
+There are no more answers.
+样例输入
+(if-fail (amb 1 2 4) (amb 2 5))
+(if-fail (amb) (amb 12 2))
+(define (getx x)
+  (require (< x 10))
+  x)
+(if-fail (getx 13) (getx 3))
+(let ((a (amb 1 2 3 4))
+      (b (if-fail (getx 13) (amb 5 6 7))))
+  (require (> (+ a b) 9))
+  (display "a=") (display a) (newline)
+  (display "b=") (display b) (newline))
+
+
+(let ((m2 (if-fail 4 50)))
+  (require (> m2 20))
+  m2)
+
+
+(all-answer 14)
+(list 1 2 3 4)
+try-again
+(all-answer (amb 1 2 3 4))
+(list 1 2 3 4)
+(amb 1 2 3 4)
+try-again
+try-again
+
+(amb 5 6 7)
+try-again
+try-again
+try-again
+try-again
+
+(amb)
+
+(let ((k (list (amb 1 2 3) (amb 4 5 6))))
+  (require (> (+ (car k) (car (cdr k))) 7))
+  k)
+
+
+
+(let ((m (+ (amb 1 2 3) (amb 4 5 6))))
+  (require (> m 6))
+  m)
+try-again
+
+(define (test2)
+  (let ((op (amb - +))
+        (k (amb 1 2 3)))
+    (let ((r (op 4 k)))
+      (require (< r 2))
+      r)))
+(test2)
+
+
+(define (test3)
+    (let ((m (if (amb true false)
+                3
+                4)))
+      (require (= m 4))
+      m))
+
+(test3) 
+
+(define (test x y)
+  (let ((m (amb  50 30 10 20 50)))
+    (require (> (+ x y) m))
+    m))
+(test 7 8)
+(test 1 2)
+
+
+(let ((k (list (amb 8 2 3) (amb 4 5 6))))
+  (require (< (* (car k) (car (cdr k))) 12))
+  k)
+
+try-again
+try-again
+
+
+(define (inc x) (+ x 1))
+(if (> 2 3) (inc 3) (* 2 (inc 8)))
+
+(all-answer (list (amb 1 2 3) (amb 4 5 6)))
+try-again
+样例输出
+1
+12
+3
+a=3
+b=7
+There are no more answers.
+14
+(1 2 3 4)
+There are no more answers.
+1
+2
+3
+4
+(1 2 3 4)
+1
+2
+3
+5
+6
+7
+There are no more answers.
+There are no more answers.
+There are no more answers.
+(2 6)
+7
+7
+1
+4
+10
+There are no more answers.
+(2 4)
+(2 5)
+There are no more answers.
+18
+(1 4)
+(1 5)
+(1 6)
+(2 4)
+(2 5)
+(2 6)
+(3 4)
+(3 5)
+(3 6)
+There are no more answers.
+提示
+对 if-fail 的提示:
+
+如果 proc是表达式exp经过分析(analyze)得到的分派函数,其形式是
+(lambda (env succeed fail) ....)
+则 (proc env succeed1 fail1) 执行的情况是:
+
+如果exp求值成功，则 (proc env succeed1 fail1) 执行中会调用：
+(succeed1 [val exp] fail1) ;[val exp]表示 exp的值
+如果exp求值失败，则 (proc env succeed1 fail1) 执行中会调用：
+(fail1)
+不会调用succeed1
+
+另外请注意，如果if-fail的第一项求值成功，if-fail返回其值a,那么即便在随后的求值过程中a的取值导致失败，程序也不会回溯到if-fail表达式处并换成第二项的值然后再继续。

@@ -1,0 +1,81 @@
+描述
+请定义函数partial-sums-ex，它以流S和函数op为参数，返回的流中的元素是
+
+
+S[0],S[1],(op S[0] S[2]), (op S[1] S[3]),(op S[0] S[2] S[4]), (op S[1] S[3] S[5]),(op S[0] S[2] S[4] S[6]), (op S[1] S[3] S[5] S[7])....
+
+
+例如,(partial-sums + integers)应该生成1 2 4 6 9 12 16 20 25 30 .....
+
+
+其中,integers是正整数流
+
+
+请在程序中补写partial-sums-ex 的定义
+
+
+#lang racket
+(require r5rs)
+(define env (scheme-report-environment 5))
+(eval '(define (stream-car stream) (car stream)) env)
+(eval '(define (stream-cdr stream) (force (cdr stream))) env)
+(eval '(define-syntax cons-stream
+  (syntax-rules ()
+    [(cons-stream x y) (cons x (delay y))])) env)
+
+(eval '(define the-empty-stream '()) env)
+(eval '(define (stream-null? stream) (null? stream)) env)
+         
+(eval '(define (stream-ref s n)  ;get the nth item from s. n starts from 
+  (if (stream-null? s) the-empty-stream
+      (if (= n 0)
+          (stream-car s)
+          (stream-ref (stream-cdr s) (- n 1)))))
+      env)
+
+(eval '(define (display-stream s n) ;display first n items of s
+  (if (= n 0)
+      (displayln "")
+      (begin (display (stream-car s)) (display " ") (display-stream (stream-cdr s) (- n 1)))))
+      env)
+
+
+(eval '
+(define (partial-sums-ex op s)
+// 在此处补充你的代码
+env)
+
+(define (myloop)
+  (define (eval-codes codes last-val)
+    (if (null? codes)
+        last-val
+        (eval-codes (cdr codes) (eval (car codes) env))))
+    
+  (let ((codes (read)))
+    (if (eq? codes eof)
+        (void)
+        (begin (displayln (eval-codes codes (void))) (myloop)))))
+(myloop)
+输入
+一段scheme程序，被放在一对括号中。该程序一定以 'ok 结尾
+输出
+输入的scheme程序的运行结果
+样例输入
+(
+ (define (displayln x) (display x) (newline))
+ (define (integers-starting-from n)
+  (cons-stream n (integers-starting-from (+ n 1))))
+
+(define ones (cons-stream 1 ones))
+
+(display-stream (partial-sums-ex + (integers-starting-from 1)) 10)
+'ok
+)
+样例输出
+1 2 4 6 9 12 16 20 25 30 
+ok
+提示
+1. racke中(require r5rs)后， eval 即成为基本过程。该过程可以对一个scheme表达式在指定环境中求值，并返回求值的结果
+2. 全局环境即为 (scheme-report-environment 5)
+3. eval 的用法示例： (eval '(+ 3 7) (scheme-report-environment 5)), 返回值为 10。在要求值的表达式前加'即可。
+4. 程序中用 eval 对你编写的函数进行了求值并将其加入到全局环境，因此输入中的程序就可以使用你写的函数了。

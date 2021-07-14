@@ -1,0 +1,53 @@
+描述
+If f is a numerical function and n is a positive integer, then we can form the nth repeated application of f, which is defined to be the function whose value at x is f(f(...(f(x))...)). For example, if f is the function x  x + 1, then the nth repeated application of f is the function x  x + n. If f is the operation of squaring a number, then the nth repeated application of f is the function that raises its argument to the 2nth power. Write a procedure that takes as inputs a procedure that computes f and a positive integer n and returns the procedure that computes the nth repeated application of f. Your procedure should be able to be used as follows:
+
+((repeated square 2) 5)
+625
+
+Hint: You may find it convenient to use compose from exercise 1.42.
+
+
+
+要求补足程序。除了输出固定的一些结果以外，对于给定的输入能产生指定的输出结果
+
+#lang racket
+(define (square x) (* x x))
+(define (inc x) (+ x 1))
+(define (db x) (* x 2))
+
+(define (repeated f n)
+// 在此处补充你的代码
+((repeated square 2) 5)
+((repeated inc 4) 6)
+((repeated db 4) 6)
+
+(display "********") (newline)
+
+(define (myloop)
+  (let ((n (read)))
+    (if (eq? n eof)
+        (void)
+        (begin (display ((repeated square n) 2)) 
+               (newline) (myloop)))))
+
+(myloop)
+输入
+每组数据一行，每行是一个整数n
+输出
+对每个整数n，输出以2作为参数调用题目中的square函数n次复用后的函数 的返回值
+样例输入
+1
+2
+3
+4
+5
+样例输出
+625
+10
+96
+********
+4
+16
+256
+65536
+4294967296

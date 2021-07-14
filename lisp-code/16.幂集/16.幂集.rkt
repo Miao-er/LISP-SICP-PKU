@@ -1,0 +1,22 @@
+#lang racket
+(define (quicksort lst)
+  (if (null? lst)
+      '()
+  (append (quicksort (filter (lambda (x) (< x (car lst))) (cdr lst)))
+          (list (car lst))
+          (quicksort (filter (lambda (x) (> x (car lst))) (cdr lst))))))
+(define (power lst)
+  (if (null? lst) (list '())
+      (append (map (lambda (x) (cons (car lst) x)) (power (cdr lst))) (power (cdr lst)))))
+(define (powern lst n)
+  (if (= n 0)
+      lst
+      (power (powern lst (- n 1)))))
+(define (scanf ls1 n)
+  (if (eq? ls1 eof)
+      (void)    
+   (begin
+     (display (powern (quicksort ls1) n))
+     (newline)
+     (scanf (read) (read)))))
+(scanf (read) (read))

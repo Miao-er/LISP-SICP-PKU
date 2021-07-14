@@ -1,0 +1,47 @@
+描述
+Exercise 2.41.  Write a procedure to find all ordered triples of distinct positive integers i, j, and k less than or equal to a given integer n that sum to a given integer s.
+
+
+
+补足程序。要求不得使用递归和循环。
+
+#lang racket
+
+(define (accumulate op init seq)
+  (if (null? seq)
+      init
+      (op (car seq) (accumulate op init (cdr seq)))))
+
+(define (enumerate-interval a b)
+  (if (> a b)
+      '()
+      (cons a (enumerate-interval (+ a 1) b))))
+
+(define (flatmap proc seq)
+  (accumulate append '() (map proc seq)))
+
+
+(define (tri-num-list n s)
+// 在此处补充你的代码
+(define (myloop)
+  (let ((n (read))
+        (s (read)))
+    (if (eq? n eof)
+        (void)
+        (begin (display (tri-num-list n s)) (newline) (myloop)))))
+
+(myloop)
+输入
+几组数据，每组一行，就是两个整数 n 和 s
+(3<=n<=20,1<=s<=10000)
+输出
+按字典序输出符合要求的三元组（i,j,k)。要求 i < j < k
+样例输入
+4 6
+5 10
+3 9
+
+样例输出
+((1 2 3))
+((1 4 5) (2 3 5))
+()

@@ -1,0 +1,74 @@
+描述
+先参看 3.13:
+
+Exercise 3.13.  Consider the following make-cycleprocedure, which uses the last-pairprocedure defined in exercise 3.12:
+
+(define (make-cycle x)
+  (set-cdr! (last-pair x) x)
+  x)
+
+Draw a box-and-pointer diagram that shows the structure zcreated by
+
+(define z (make-cycle (list 'a 'b 'c)))
+
+What happens if we try to compute (last-pair z)?
+
+
+
+再做:
+
+Exercise 3.18.  Write a procedure that examines a list and determines whether it contains a cycle, that is, whether a program that tried to find the end of the list by taking successive cdrs would go into an infinite loop.  Exercise 3.13constructed such lists.
+
+#lang racket
+(require r5rs)
+(define (exit) #f)
+(define env (scheme-report-environment 5))
+
+(eval '(define (last-pair lst)
+         (if (null? (cdr lst))
+             lst
+             (last-pair (cdr lst))))
+      env)
+
+(eval '(define (make-cycle lst)
+         (set-cdr! (last-pair lst) lst)
+         lst)
+      env)
+
+(eval '
+// 在此处补充你的代码
+env)
+
+(define (myloop)
+  (define (eval-codes codes last-val)
+    (if (null? codes)
+        last-val
+        (eval-codes (cdr codes) (eval (car codes) env))))
+    
+  (let ((codes (read)))
+    (if (eq? codes eof)
+        (void)
+        (begin (displayln (eval-codes codes (void))) (myloop)))))
+
+
+(myloop)
+输入
+每行一段scheme程序，该程序构造一个表，然后用你写的check-cycle测试表中是否有环。该程序被放在一对括号中。
+输出
+针对每行的程序，输出测试的结果#t或者#f
+样例输入
+((check-cycle (list 1 2 3 4 5 6)))
+((define x4 (list (list 1) 2))  (set-cdr! (car x4) (cdr x4))   (check-cycle x4))
+((define e1 (cons 'a '())) (define e2 (cons e1 e1)) (define e7 (cons e2 e2)) (check-cycle e7))
+((define clst (make-cycle (list 1 2 3 4 5 6 7 8 9 10))) (check-cycle clst))
+样例输出
+#f
+#f
+#f
+#t
+提示
+1. 有了 (require r5rs) ，就不必使用 mlist了，list成为可修改序对。set-car,set-cdr都可以使用。
+2. racke中(require r5rs)后， eval 即成为基本过程。该过程可以对一个scheme表达式在指定环境中求值，并返回求值的结果
+3. 全局环境即为 (scheme-report-environment 5)
+4. eval 的用法示例： (eval '(+ 3 7) (scheme-report-environment 5)), 返回值为 10。在要求值的表达式前加'即可。
+5. 程序中用 eval 对make-cycle,last-pair以及你编写的 check-cycle 函数进行了求值并将其加入到全局环境，因此输入中的程序就可以使用这些函数了。

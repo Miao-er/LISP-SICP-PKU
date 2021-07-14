@@ -1,0 +1,46 @@
+描述
+Define a procedure double that takes a procedure of one argument as argument and returns a procedure that applies the original procedure twice. For example, if inc is a procedure that adds 1 to its argument, then (double inc) should be a procedure that adds 2. What value is returned by
+
+(((double (double double)) inc) 5)
+
+
+
+要求补足程序。除了输出固定的一些结果以外，对于给定的输入能产生指定的输出结果。
+
+
+
+#lang racket
+(define (inc x) (+ x 1))
+(define (square x ) (* x x))
+(define (doubleF f)
+// 在此处补充你的代码
+((doubleF square) 10)
+(define X (doubleF (doubleF doubleF)))
+((X inc) 5)
+(((doubleF (doubleF (doubleF doubleF))) inc) 5) ;输出261 
+
+(display "********") (newline)
+(define (myloop)
+  (let ((k (read)))
+    (if (eq? k eof)
+        (void)
+        (begin (display ((X inc) k)) 
+               (newline) (myloop)))))
+
+(myloop)
+输入
+每行一个数
+输出
+每个数所对应的计算结果
+样例输入
+10
+20
+15
+样例输出
+10000
+21
+261
+********
+26
+36
+31

@@ -1,0 +1,45 @@
+描述
+super-map过程以一个取n个参数的过程p和n个表为参数，将过程p应用与所有表的第一个元素，而后应用于所有表的第二个元素....如此下去，然后将所有应用的结果收集成一张表返回。例如
+
+(super-map + (list 1 2 3) (list 40 50 60) (list 700 800 900))
+
+的值是
+
+(list 741 852 963)
+
+请填空
+
+#lang racket
+(define (exit) #f)
+(define (map op lst)
+  (if (null? lst)
+      '()
+      (cons (op (car lst))
+            (map op (cdr lst)))))
+  
+(define (super-map op . w)
+// 在此处补充你的代码
+(define (myloop)
+  (let ((a (read))
+        (b (read))
+        (c (read)))
+    (if (eq? a eof)
+        (void)
+        (begin (displayln (super-map + a b c)) 
+               (displayln (super-map (lambda (x y) (+ x (* 2 y) )) a b ))
+               (myloop)))))
+(myloop)
+输入
+多组数据，每组一行，是三张表，表中元素都是整数
+输出
+对于每组数据，输出两张表 第一张表里的第i个元素，是输入的三张表的第i个元素之和 第二张表里的第i个元素，是输入的第一张表的第i个元素加上第二张表的第i个元素的2倍
+样例输入
+(1 2 3) ( 40 50 60) (700 800 900) 
+(0 0 0) (0 0 0) (0 0 0)
+样例输出
+(741 852 963) 
+(81 102 123)
+(0 0 0)
+(0 0 0)
+提示
+scheme的基本过程 (apply op args) 以表 args中的元素作为参数，去调用op函数

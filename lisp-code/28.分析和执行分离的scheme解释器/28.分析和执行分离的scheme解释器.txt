@@ -1,0 +1,48 @@
+描述
+提交一个能运行于racket的scheme解释器，对于给定的scheme程序，能够输出正确的运行结果。
+
+必须按照SICP课本上4.1节语法分离和执行分开的写法
+
+
+
+输入
+输入一个scheme程序。
+输出
+该schme程序的运行结果
+样例输入
+ (define (f x)
+  (define (g y)
+    (k y))
+  (define (k z)
+    (+ z 1))
+  (* (g x) x))
+
+
+(f 5)
+(f 6)
+样例输出
+30
+42
+提示
+提示一：
+
+下面这段程序读取到文件尾就会结束：
+(define (myloop)
+(let ((a (read)))
+(if (eq? a eof)
+(void)
+(myloop))))
+(myloop)
+
+提示二：
+
+碰到不想让函数有返回值的情况，则可返回 (void)。
+
+提示三：
+
+需要修改课本程序中的 driver-loop和 user-print，以免产生不必要的输出。输出scheme程序的运行结果样例输入(define (f x)
+(define (g y)
+(k y))
+(define (k z)
+(+ z 1))
+(* (g x) x))
